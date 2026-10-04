@@ -213,17 +213,6 @@ ExpenseManager/
 
 ---
 
-## 💡 Recommended GitHub Repository Names
-
-Here are suggested repository names tailored for this project:
-
-1. **`expense-flow`** *(Recommended)* — Short, modern, clean fintech name.
-2. **`finflow-ai`** — Highlights modern financial flow and intelligent AI parsing.
-3. **`glass-expense-ai`** — Emphasizes the modern Trent glassmorphism UI and Gemini AI features.
-4. **`smart-expense-manager`** — Professional and clear for personal and business financial accounting.
-5. **`trent-expenses`** — Matches the sleek design aesthetic and glass architecture.
-
----
 
 ## 📄 License
 

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Manager - Glass Dashboard</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Glass Design System -->
+    <link rel="stylesheet" href="css/glass.css">
+    <link rel="stylesheet" href="css/expense.css">
+</head>
+<body>
+
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="app-sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div>
+                <div class="brand-title">Expense Manager</div>
+                <div style="font-size: 0.75rem; color: var(--accent-mint); font-weight: 500;">Standalone Edition</div>
+            </div>
+        </div>
+
+        <ul class="nav-menu">
+            <li>
+                <a class="nav-link active" onclick="switchView('dashboard')">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a class="nav-link" onclick="switchView('expenses')">
+                    <i class="fas fa-receipt"></i>
+                    <span>Expenses</span>
+                </a>
+            </li>
+            <li>
+                <a class="nav-link" onclick="switchView('categories')">
+                    <i class="fas fa-tags"></i>
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li>
+                <a class="nav-link" onclick="switchView('integrations')">
+                    <i class="fas fa-robot"></i>
+                    <span>AI & Integrations</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase;">Service Status</div>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                    <span>Expense App</span>
+                    <span id="sbExpenseStatus" style="color: var(--accent-emerald);">● Online</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                    <span>WhatsApp (5003)</span>
+                    <span id="sbWaStatus" style="color: var(--text-muted);">● Checking...</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                    <span>Telegram Bot</span>
+                    <span id="sbTgStatus" style="color: var(--text-muted);">● Checking...</span>
+                </div>
+            </div>
+            <button class="glass-btn" style="width: 100%; font-size: 0.75rem; justify-content: center;" onclick="triggerBackup()">
+                <i class="fas fa-database"></i> Backup SQLite
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="app-main">
+        <!-- Live System Connection Status Bar -->
+        <div class="system-status-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 1rem; margin-bottom: 1.25rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-sm);">
+            <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Live Connection:</span>
+                <span class="status-pill" id="topStatusExpense" title="Expense Manager SQLite"><span class="status-dot online"></span> Expense Manager: Online</span>
+                <span class="status-pill" id="topStatusWa" title="ManyWhatsApp Gateway (Port 5003)"><span class="status-dot offline"></span> WhatsApp: Checking...</span>
+                <span class="status-pill" id="topStatusTg" title="Telegram Bot Service"><span class="status-dot online"></span> Telegram: Checking...</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button class="glass-btn" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;" onclick="checkSystemStatus(true)">
+                    <i class="fas fa-sync-alt"></i> Ping Services
+                </button>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 1: DASHBOARD -->
+        <!-- ================================================================= -->
+        <div id="view-dashboard" class="app-view active">
+            <header class="top-bar">
+                <div>
+                    <h1 class="page-title">Financial Dashboard</h1>
+                    <p class="page-subtitle">Track, analyze, and manage expenses seamlessly</p>
+                </div>
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <button class="glass-btn" onclick="openModal('aiModal')">
+                        <i class="fas fa-wand-magic-sparkles" style="color: var(--accent-mint);"></i> AI Quick Parse
+                    </button>
+                    <button class="glass-btn glass-btn-primary" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Add Expense
+                    </button>
+                </div>
+            </header>
+
+            <!-- KPI Stats Cards -->
+            <section class="stats-grid">
+                <div class="glass-card glass-stat-card">
+                    <div class="stat-label">
+                        <span>Total Expenses</span>
+                        <i class="fas fa-coins" style="color: var(--accent-amber);"></i>
+                    </div>
+                    <div class="stat-value" id="statTotalAllTime">₹0</div>
+                    <div class="stat-meta" id="statCount">0 transactions</div>
+                </div>
+
+                <div class="glass-card glass-stat-card">
+                    <div class="stat-label">
+                        <span>This Month</span>
+                        <i class="fas fa-calendar-alt" style="color: var(--accent-emerald);"></i>
+                    </div>
+                    <div class="stat-value" id="statThisMonth">₹0</div>
+                    <div class="stat-meta">Current Month Total</div>
+                </div>
+
+                <div class="glass-card glass-stat-card">
+                    <div class="stat-label">
+                        <span>Today</span>
+                        <i class="fas fa-bolt" style="color: var(--accent-cyan);"></i>
+                    </div>
+                    <div class="stat-value" id="statToday">₹0</div>
+                    <div class="stat-meta">Recorded Today</div>
+                </div>
+
+                <div class="glass-card glass-stat-card">
+                    <div class="stat-label">
+                        <span>AI Queue</span>
+                        <i class="fas fa-layer-group" style="color: var(--accent-violet);"></i>
+                    </div>
+                    <div class="stat-value" id="queueBadge">0</div>
+                    <div class="stat-meta">Pending Raw Messages</div>
+                </div>
+            </section>
+
+            <!-- Charts and Breakdown -->
+            <section class="charts-grid">
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                        <h3 style="font-size: 1.05rem; font-weight: 700;">Daily Spending Trend (Last 7 Days)</h3>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-chart-bar"></i> Daily Breakdown</span>
+                    </div>
+                    <div id="dailyTrendContainer" style="height: 180px; display: flex; align-items: flex-end; gap: 0.75rem; padding-top: 1rem;">
+                        <!-- Trend bars injected via app.js -->
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="font-size: 1.05rem; font-weight: 700;">Monthly Categories</h3>
+                        <span style="font-size: 0.8rem; color: var(--accent-mint); font-weight: 600;">Top Spends</span>
+                    </div>
+                    <div id="categoryBreakdownList">
+                        <!-- Categories injected via app.js -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Expenses Strip -->
+            <section class="glass-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700;">Recent Expenses</h3>
+                    <button class="glass-btn" onclick="switchView('expenses')">
+                        View All Expenses <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+                <div class="glass-table-container">
+                    <table class="glass-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardRecentBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2: FULL EXPENSES EXPLORER -->
+        <!-- ================================================================= -->
+        <div id="view-expenses" class="app-view" style="display: none;">
+            <header class="top-bar">
+                <div>
+                    <h1 class="page-title">Expenses Explorer</h1>
+                    <p class="page-subtitle">Search, filter, edit, and export your entire transaction history</p>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="glass-btn" onclick="exportExpenses('csv')">
+                        <i class="fas fa-file-csv" style="color: var(--accent-emerald);"></i> Export CSV
+                    </button>
+                    <button class="glass-btn" onclick="exportExpenses('json')">
+                        <i class="fas fa-file-code" style="color: var(--accent-cyan);"></i> Export JSON
+                    </button>
+                    <button class="glass-btn glass-btn-primary" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Add Expense
+                    </button>
+                </div>
+            </header>
+
+            <section class="glass-card">
+                <div class="toolbar">
+                    <div class="filter-group">
+                        <input type="text" id="searchInput" class="glass-input" placeholder="Search description, notes..." style="width: 240px;">
+                        <select id="categoryFilter" class="glass-select" style="width: 170px;">
+                            <option value="">All Categories</option>
+                        </select>
+                        <select id="modeFilter" class="glass-select" style="width: 150px;">
+                            <option value="">All Payment Modes</option>
+                        </select>
+                        <input type="date" id="fromDateFilter" class="glass-input" style="width: 140px;" title="From Date">
+                        <input type="date" id="toDateFilter" class="glass-input" style="width: 140px;" title="To Date">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="glass-btn" onclick="exportExpenses('csv')" title="Export filtered or all transactions">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <button class="glass-btn" onclick="resetFilters()">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                        <button class="glass-btn" onclick="loadExpenses()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-table-container">
+                    <table class="glass-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Source</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenseTableBody">
+                            <!-- Injected via app.js -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="paginationControls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
+                    <!-- Pagination injected via app.js -->
+                </div>
+            </section>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 3: CATEGORIES & SUBCATEGORIES MANAGEMENT -->
+        <!-- ================================================================= -->
+        <div id="view-categories" class="app-view" style="display: none;">
+            <header class="top-bar">
+                <div>
+                    <h1 class="page-title">Category Management</h1>
+                    <p class="page-subtitle">Organize and customize spending categories and subcategories</p>
+                </div>
+                <button class="glass-btn glass-btn-primary" onclick="openModal('addCategoryModal')">
+                    <i class="fas fa-plus"></i> New Category
+                </button>
+            </header>
+
+            <div id="categoryCardsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+                <!-- Category cards injected via app.js -->
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 4: AI & INTEGRATIONS (WHATSAPP & TELEGRAM) -->
+        <!-- ================================================================= -->
+        <div id="view-integrations" class="app-view" style="display: none;">
+            <header class="top-bar">
+                <div>
+                    <h1 class="page-title">AI Engine & Integrations</h1>
+                    <p class="page-subtitle">Configure Google Gemini, OpenRouter, WhatsApp, and Telegram automated reporting</p>
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <!-- AI Engine Settings -->
+                <div class="glass-card">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                        <i class="fas fa-brain" style="color: var(--accent-mint); font-size: 1.4rem;"></i>
+                        <div>
+                            <h3 style="font-size: 1.15rem; font-weight: 700;">AI Models & Parsing</h3>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Multi-LLM natural language extraction</div>
+                        </div>
+                    </div>
+
+                    <form id="aiConfigForm">
+                        <div style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.9rem;">Enable Fast Regex Shortcut</label>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Instantly parses simple messages without calling AI API</div>
+                            </div>
+                            <input type="checkbox" id="aiUseRegex" checked style="transform: scale(1.3); cursor: pointer;">
+                        </div>
+
+                        <div style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.9rem;">Google Gemini AI</label>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">gemini-2.5-flash with key rotation & Tamil translation</div>
+                            </div>
+                            <input type="checkbox" id="aiUseGemini" checked style="transform: scale(1.3); cursor: pointer;">
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Gemini API Keys (One per line)</label>
+                            <textarea id="aiGeminiKeys" class="glass-textarea" rows="3" placeholder="AIzaSy..."></textarea>
+                        </div>
+
+                        <div style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.9rem;">Fast Regex Shortcut</label>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Quick local parsing for simple 'Petrol 500' lines</div>
+                            </div>
+                            <input type="checkbox" id="aiUseRegex" checked style="transform: scale(1.3); cursor: pointer;">
+                        </div>
+
+                        <div style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.9rem;">OpenRouter AI Fallback</label>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Secondary model fallback (Nemotron, Llama, etc.)</div>
+                            </div>
+                            <input type="checkbox" id="aiUseOpenRouter" style="transform: scale(1.3); cursor: pointer;">
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">OpenRouter Model</label>
+                            <input type="text" id="aiOpenRouterModel" class="glass-input" placeholder="google/gemini-2.0-flash-001">
+                        </div>
+
+                        <div style="margin-bottom: 1.25rem;">
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">OpenRouter API Key</label>
+                            <input type="password" id="aiOpenRouterKey" class="glass-input" placeholder="sk-or-v1-...">
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <button type="button" class="glass-btn" style="flex: 1;" onclick="testGeminiConnection()">
+                                <i class="fas fa-bolt" style="color: var(--accent-amber);"></i> Test Gemini AI
+                            </button>
+                            <button type="submit" class="glass-btn glass-btn-primary" style="flex: 1;">
+                                <i class="fas fa-save"></i> Save AI Config
+                            </button>
+                        </div>
+                        <div id="aiTestResult" style="display: none; padding: 0.65rem; border-radius: var(--radius-sm); font-size: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass);"></div>
+                    </form>
+                </div>
+
+                <!-- WhatsApp & Telegram Integration -->
+                <div class="glass-card">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                        <i class="fab fa-whatsapp" style="color: var(--accent-emerald); font-size: 1.4rem;"></i>
+                        <div>
+                            <h3 style="font-size: 1.15rem; font-weight: 700;">WhatsApp & Telegram Automation</h3>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Multi-account routing & chat commands</div>
+                        </div>
+                    </div>
+
+                    <form id="integrationConfigForm">
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <label style="font-size: 0.8rem; color: var(--text-secondary);">WhatsApp Service URL (ManyWhatsApp)</label>
+                                <button type="button" class="glass-btn" style="padding: 0.15rem 0.5rem; font-size: 0.72rem;" onclick="loadManyWhatsAppAccounts()">
+                                    <i class="fas fa-sync-alt"></i> Fetch Accounts
+                                </button>
+                            </div>
+                            <input type="text" id="intWaUrl" class="glass-input" placeholder="http://127.0.0.1:5003">
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Select WhatsApp Account</label>
+                            <select id="intWaAccount" class="glass-select">
+                                <option value="">Auto (First Connected WhatsApp)</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Target WhatsApp Group JID / Phone Number</label>
+                            <input type="text" id="intWaGroups" class="glass-input" placeholder="120363213344093218@g.us or 919876543210">
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Select Telegram Account</label>
+                            <select id="intTgAccount" class="glass-select">
+                                <option value="">Direct Bot API Token (Standard)</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Telegram Bot Token</label>
+                            <input type="text" id="intTgToken" class="glass-input" placeholder="1234567890:ABC-DEF...">
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Telegram Chat ID</label>
+                            <input type="text" id="intTgChats" class="glass-input" placeholder="1601695381">
+                        </div>
+
+                        <div style="border-top: 1px solid var(--border-glass); padding-top: 1rem; margin-bottom: 1.25rem;">
+                            <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">Automated Scheduled Reports</label>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                                    <input type="checkbox" id="intAutoDaily" checked> Daily
+                                </label>
+                                <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                                    <input type="checkbox" id="intAutoWeekly" checked> Weekly
+                                </label>
+                                <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                                    <input type="checkbox" id="intAutoMonthly" checked> Monthly
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <button type="button" class="glass-btn" style="flex: 1;" onclick="testReport('daily')">
+                                <i class="fas fa-paper-plane"></i> Test Daily Report
+                            </button>
+                            <button type="button" class="glass-btn" style="flex: 1;" onclick="testReport('weekly')">
+                                <i class="fas fa-paper-plane"></i> Test Weekly Report
+                            </button>
+                        </div>
+
+                        <button type="submit" class="glass-btn glass-btn-primary" style="width: 100%;">
+                            <i class="fas fa-save"></i> Save Integration Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ================================================================= -->
+<!-- MODALS -->
+<!-- ================================================================= -->
+
+<!-- Add / Edit Expense Glass Modal -->
+<div id="expenseModal" class="glass-modal-overlay">
+    <div class="glass-modal">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 id="modalTitle" style="font-size: 1.25rem; font-weight: 700;">Add New Expense</h2>
+            <button class="glass-btn" style="padding: 0.3rem 0.6rem; border-radius: var(--radius-full);" onclick="closeModal('expenseModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="expenseForm">
+            <input type="hidden" id="expEditId">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Date</label>
+                    <input type="date" id="expDate" class="glass-input" required>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Amount (₹)</label>
+                    <input type="number" step="0.01" id="expAmount" class="glass-input" placeholder="0.00" required>
+                </div>
+            </div>
+
+            <!-- Description with AI Auto-Fill / Analyze Option -->
+            <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary);">Description / Quick Entry</label>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: var(--accent-mint); cursor: pointer; display: flex; align-items: center; gap: 0.35rem;" title="Auto-extract Category, Subcategory, and Amount when typing or blurring">
+                            <input type="checkbox" id="chkAiAutoAnalyze" checked>
+                            <span>AI Auto-Categorize</span>
+                        </label>
+                        <button type="button" class="glass-btn" style="padding: 0.15rem 0.5rem; font-size: 0.72rem; color: var(--accent-mint);" onclick="triggerAiAnalyze()">
+                            <i class="fas fa-wand-magic-sparkles"></i> AI Analyze
+                        </button>
+                    </div>
+                </div>
+                <div style="position: relative;">
+                    <input type="text" id="expDesc" class="glass-input" placeholder="e.g. Petrol 450, Mutton 1kg 1000, 2 coffees 60..." required>
+                    <span id="aiAnalyzeSpinner" style="display: none; position: absolute; right: 12px; top: 10px; font-size: 0.8rem; color: var(--accent-mint);"><i class="fas fa-spinner fa-spin"></i> Analyzing...</span>
+                </div>
+                <div id="aiSuggestionBadge" style="display: none; font-size: 0.75rem; margin-top: 0.35rem; color: var(--accent-mint);"></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Category</label>
+                    <select id="expCategory" class="glass-select" required></select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Subcategory (Optional)</label>
+                    <input type="text" id="expSubcategory" class="glass-input" placeholder="e.g. Vegetables">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Payment Mode</label>
+                <select id="expMode" class="glass-select"></select>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Notes (Optional)</label>
+                <input type="text" id="expNotes" class="glass-input" placeholder="Additional details...">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="glass-btn" onclick="closeModal('expenseModal')">Cancel</button>
+                <button type="submit" class="glass-btn glass-btn-primary">Save Expense</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div id="addCategoryModal" class="glass-modal-overlay">
+    <div class="glass-modal">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.2rem; font-weight: 700;">Add New Category</h2>
+            <button class="glass-btn" style="padding: 0.3rem 0.6rem; border-radius: var(--radius-full);" onclick="closeModal('addCategoryModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="addCategoryForm">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Category Name</label>
+                <input type="text" id="newCatName" class="glass-input" placeholder="e.g. Fitness, Pet Care" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Color Accent</label>
+                    <input type="color" id="newCatColor" value="#10B981" style="width: 100%; height: 38px; border: none; background: transparent; cursor: pointer;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">First Subcategory</label>
+                    <input type="text" id="newCatSub" class="glass-input" placeholder="e.g. Gym, Trainer">
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="glass-btn" onclick="closeModal('addCategoryModal')">Cancel</button>
+                <button type="submit" class="glass-btn glass-btn-primary">Create Category</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Subcategory Modal -->
+<div id="addSubcategoryModal" class="glass-modal-overlay">
+    <div class="glass-modal">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h2 id="subModalTitle" style="font-size: 1.2rem; font-weight: 700;">Add Subcategory</h2>
+            <button class="glass-btn" style="padding: 0.3rem 0.6rem; border-radius: var(--radius-full);" onclick="closeModal('addSubcategoryModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="addSubcategoryForm">
+            <input type="hidden" id="targetCatId">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Subcategory Name</label>
+                <input type="text" id="newSubName" class="glass-input" placeholder="e.g. Supplements, Equipment" required>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="glass-btn" onclick="closeModal('addSubcategoryModal')">Cancel</button>
+                <button type="submit" class="glass-btn glass-btn-primary">Add Subcategory</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- AI Quick Parse Modal -->
+<div id="aiModal" class="glass-modal-overlay">
+    <div class="glass-modal">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <i class="fas fa-wand-magic-sparkles" style="color: var(--accent-mint); font-size: 1.2rem;"></i>
+                <h2 style="font-size: 1.25rem; font-weight: 700;">AI Expense Parser</h2>
+            </div>
+            <button class="glass-btn" style="padding: 0.3rem 0.6rem; border-radius: var(--radius-full);" onclick="closeModal('aiModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Paste chat messages, bill lists, or Tamil/Tanglish text. The engine extracts individual line items, dates, and amounts.
+        </p>
+
+        <textarea id="aiParseInput" class="glass-textarea" rows="5" placeholder="Example:
+Mutton 1kg 1000
+Vegetable onion 70
+Toys for vidhuran 200
+600 for tution"></textarea>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+            <button id="aiParseBtn" class="glass-btn glass-btn-primary">
+                <i class="fas fa-bolt"></i> Extract Expenses
+            </button>
+        </div>
+
+        <div id="aiParsedResults"></div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

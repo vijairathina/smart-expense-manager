@@ -1,0 +1,80 @@
+# =========================================================================
+# Expense Manager - .gitignore
+# =========================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables & Sensitive Credentials
+.env
+.env.*
+!.env.example
+credentials.json
+
+# SQLite Database & Snapshots
+*.db
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+data/*.db
+backups/*.db
+backups/*.gz
+
+# Temporary / Scratch Files
+scratch/
+*.tmp
+*.temp
+*.log
+logs/
+
+# IDE / Editor Settings
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+
+# OS Generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
